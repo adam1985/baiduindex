@@ -1,6 +1,6 @@
 /**
  * 使用命令
- *  node index [startIndex] [excuteType] [taskIndex]
+ *  node index [startIndex] [excuteType] [taskIndex] [filmname]
  *
  */
 
@@ -46,10 +46,11 @@ if( arguments.length < 3 ){
 
 var startIndex = parseInt(arguments[0]),
     excuteType = arguments[1] || 'restart',
-    taskIndex = parseInt(arguments[2]);
+    taskIndex = parseInt(arguments[2]),
+    filmname = arguments[3];
 
 
-var dirPath = './create/',
+var dirPath = './create/' + filmname + '/',
     proxyPath = __dirname + '/ip/online/',
     formalPath =  proxyPath + 'formal.txt',
     successProxyPath = proxyPath + 'success.txt',

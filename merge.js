@@ -8,18 +8,31 @@ var sys = require('sys'),
     fs = require('fs'),
     spawn = require('child_process').spawn,
     path = require('path'),
+    tools = require('./module/tools'),
     readJson = require('./module/readJson');
 
-var dirPath = './create/',
-    backupPath = './backup/',
-    isComplete = false;
+
 
 /**
  * 处理参数
  * @type {Array}
  */
 
-var args = process.argv.splice(2), isMerge = args.length;
+var args = process.argv.splice(2),
+    taskName = args[0],
+    filelists = args.slice(1),
+    filetype = ['baiduindex', 'noneres', 'success'];
+    isMerge = args.length;
+
+var dirPath = './create/',
+    backupPath = './backup/',
+    isComplete = false;
+
+    if( tools.inArray(filetype, taskName)  ) {
+        filelists = args;
+    } else {
+        dirPath += taskName + '/';
+    }
 
 var inArray = function(arr, val){
         var _inArray = false;
@@ -33,7 +46,7 @@ var inArray = function(arr, val){
 };
 
 
-var dirExp = /create\W\d+\Wdata/;
+var dirExp = /create\W(?:\w+\W)?\d+\Wdata/;
 
 function mergeInterface (dirname, filelists, cb) {
     var arg = arguments, count = 0;
@@ -42,6 +55,7 @@ function mergeInterface (dirname, filelists, cb) {
             fs.unlinkSync(dirPath + v + '.txt');
         }
     });
+
     fs.readdir(dirname, function(err, basenames) {
         count = basenames.length;
         if (count > 0) {
@@ -91,7 +105,7 @@ function mergeInterface (dirname, filelists, cb) {
 
 if( isMerge ) {
     console.log('开始合并接口文件');
-    mergeInterface(dirPath, args, function(){});
+    mergeInterface(dirPath, filelists, function(){});
 } else {
     console.log('开始排序接口文件');
     ["success", "noneres"].forEach(function(v){
