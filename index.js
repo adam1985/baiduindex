@@ -242,7 +242,6 @@ var createBaiduIndex = function( interfaceContents, mnameIndex, filmname, cb ){
         "str_sex" : "sex"
     };
 
-    logerState( successPath, filmname, function(isHasRecode){
         if( !baiduIndexState[filmname] ) {
             var getSocial = [], interest = [], filmType = mlist[mnameIndex].type;
 
@@ -280,10 +279,7 @@ var createBaiduIndex = function( interfaceContents, mnameIndex, filmname, cb ){
                 pathState[baiduindexFile] = 1;
                 createFile(baiduindexFile, result.join(''));
             } else {
-                //if( !isHasRecode ) {
                     fs.appendFileSync(baiduindexFile, result.join(''));
-                //}
-
             }
 
 
@@ -293,7 +289,6 @@ var createBaiduIndex = function( interfaceContents, mnameIndex, filmname, cb ){
 
             cb && cb();
         }
-    });
 
 };
 
@@ -457,7 +452,7 @@ var createProxyLoger = function(path, name, type){
 
 
 // 测试代理ip是否连接正常
-var tcpTimeout = 30 * 1000, tcpLink;
+var tcpTimeout = 30 * 1000, tcpLink, clientTimeOut = 5 * 1000;;
 var startCapture = function(ip, success, fail){
     var arg = arguments;
     console.log('[' + mnameIndex + '-' + usedIpIndex + ']' + '"' + ip + '"正在检测ip是否连接正常!');
@@ -465,25 +460,34 @@ var startCapture = function(ip, success, fail){
         try{
             var ipArr = ip.split(":");
             var client = net.createConnection(ipArr[1], ipArr[0]);
+
+            client.setTimeout(clientTimeOut, function(){
+                client.destroy();
+            });
+
             client.on('connect', function () {
                 success();
+                client.destroy();
             });
             client.on('error', function(e){
                 console.log('[' + mnameIndex + '-' + usedIpIndex + ']' + '"' + ip + '"网络连接异常!');
                 createProxyLoger(failProxyPath, ip, 'fail');
                 getProxyIp( ++usedIpIndex );
+                client.destroy();
                 arg.callee( proxyIp, success);
             });
             client.on('timeout', function(e) {
                 console.log('[' + mnameIndex + '-' + usedIpIndex + ']' + '"' + ip + '"网络tcp连接超时!');
                 createProxyLoger(failProxyPath, ip, 'fail');
                 getProxyIp( ++usedIpIndex );
+                client.destroy();
                 arg.callee( proxyIp, success);
             });
         } catch (e){
             console.log('[' + mnameIndex + '-' + usedIpIndex + ']' + '"' + ip + '"ip或端口格式不对!!');
             createProxyLoger(failProxyPath, ip, 'fail');
             getProxyIp( ++usedIpIndex );
+            client.destroy();
             arg.callee( proxyIp, success);
         }
     };
@@ -641,9 +645,17 @@ var excuteExec = function(){
                                         baiduindexContents.forEach(function(value){
                                             interfaceContents.push( JSON.parse( tools.trim(base64.decode(value)) ));
                                         });
-                                        createBaiduIndex(interfaceContents, mnameIndex, mname, function(){
-                                            stdoutLoger(successPath, '抓取完成', true, true, function(){});
+
+                                        logerState( successPath, mname, function(isHasRecode){
+                                            if( !isHasRecode ) {
+                                                createBaiduIndex(interfaceContents, mnameIndex, mname, function(){
+                                                    stdoutLoger(successPath, '抓取完成', true, true, function(){});
+                                                });
+                                            }
                                         });
+
+
+
 
                                         createProxyLoger(successProxyPath, proxyIp, 'success');
 

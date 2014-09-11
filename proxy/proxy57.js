@@ -30,9 +30,12 @@ var getproxy = function( callback ) {
     ng.post('http://www.5iggx.com/Q1002054290.php',function(data) {
         $ = cheerio.load(data);
 
-        var content = $('body').html(),
-            rex = /\d+\.\d+\.\d+\.\d+:\d+/gm,
+        var content = $('.article').html(),
+            rex = /\d+\.\d+\.\d+\.\d+:\d+/gm, proxyIps;
+
+        if( content ) {
             proxyIps = content.match(rex);
+        }
         if( proxyIps && proxyIps.length ){
             proxyList = proxyIps;
         }

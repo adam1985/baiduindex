@@ -1,3 +1,0 @@
-{"name":"1.179.147.2:8080","type":"verified"}
-{"name":"5.53.16.183:8080","type":"verified"}
-{"name":"118.141.211.53:8088","type":"verified"}

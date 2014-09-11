@@ -38,8 +38,11 @@ var getproxy = function( callback ) {
                     $ = cheerio.load(data);
 
                     var content = $('.article').html(),
-                        rex = /\d+\.\d+\.\d+\.\d+:\d+/gm,
+                        rex = /\d+\.\d+\.\d+\.\d+:\d+/gm, proxyIps;
+
+                    if( content ) {
                         proxyIps = content.match(rex);
+                    }
                     if( proxyIps && proxyIps.length ){
                         totalProxyIps = totalProxyIps.concat(proxyIps);
                     }

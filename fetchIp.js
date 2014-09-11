@@ -40,6 +40,7 @@ var proxyIpRange = {start : 1, end : 62},
     maxFailIndex = 50;
 
 var typeState = {
+        "-1" : "online",
         "0" : "fetch",
         "1" : "verify",
         "2" : "filter"
@@ -72,7 +73,7 @@ var typeState = {
     backupPath = workPath + 'backup/',
     targetPath;
 
-    if( type == 0 ) {
+    if( type < 1 ) {
         targetPath = workPath + dirname + '/';
         spawn('mkdir', [targetPath]);
     } else {
@@ -234,8 +235,16 @@ var checkPageCaptrue = function( ip ,success, cb) {
 
 };
 
-if( type == 0 ){
-
+if( type == 0 || type == -1 ){
+    var spiderPath, isOnline = false;
+    if( type == -1 ){
+        isOnline = true;
+    }
+    if( isOnline ) {
+        spiderPath = targetPath + 'temp.txt';
+    } else {
+        spiderPath = formalPath;
+    }
     (function(){
         var arg = arguments;
         if( proxyIndex <= endIndex ) {
@@ -278,9 +287,15 @@ if( type == 0 ){
                                     }
                                 }, 'json');
                                 checkPageCaptrue(name, function(){
-                                    readJson(formalPath, function(formalList){
+                                    readJson(spiderPath, function(formalList){
+                                        if( isOnline ){
+                                            if( formalList.length > 1000 ) {
+                                                fs.writeFileSync(formalPath, fs.readFileSync(spiderPath).toString());
+                                                fs.unlinkSync(spiderPath);
+                                            }
+                                        }
                                         if( !tools.inArray(formalList, name, true) ) {
-                                            appendFile(formalPath, JSON.stringify({name : name, type : "success"}) + '\r\n');
+                                            appendFile(spiderPath, JSON.stringify({name : name, type : "success"}) + '\r\n');
                                         }
                                         failIndex = 0;
                                     }, 'json');

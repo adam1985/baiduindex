@@ -42,8 +42,8 @@ var startIndex = parseInt(arguments[0]),
 dateFormat.format();
 var initTime = new Date();
 var dateString = initTime.format("yyyyMMddhhmmss");
-spawn('cp', ["-r", dirPath, backupPath + dateString] );
-console.log('成功备份数据');
+//spawn('cp', ["-r", dirPath, backupPath + dateString] );
+//console.log('成功备份数据');
 
 
 var startTime = '', endTime = '';
@@ -103,9 +103,9 @@ var interfaceMerge = function(taskName, cb){
 //保存被子进程实例数组
 var workers = {};
 //这里的被子进程理论上可以无限多
-var appsPath = [];
+var appsPath = {};
 var taskState = {};
-var completeProcess = [];
+var completeProcess = {};
 var createWorker = function(appPath){
 
     var len = appPath.args.length;
@@ -113,13 +113,15 @@ var createWorker = function(appPath){
     var worker = fork(appPath.path, appPath.args, {silent:true});
 
     var taskName = appPath.args[len-1];
+    completeProcess[taskName] = [];
+    workers[taskName] = {};
     //监听子进程exit事件
     worker.on('exit',function(){
         console.log('worker:' + worker.pid + 'exited');
         appLoger('worker:' + worker.pid + 'exited', appPath.args, taskName );
 
         if( !taskState[appPath.args[len-2]] ) {
-            delete workers[worker.pid];
+            delete workers[taskName][worker.pid];
             appPath.args[0] = -1;
             createWorker(appPath);
         }
@@ -137,10 +139,9 @@ var createWorker = function(appPath){
             var processIndex = appPath.args[len-2];
             taskState[processIndex] = 1;
             appLoger('任务已完成:' + processIndex, appPath.args, taskName);
-            delete workers[worker.pid];
-            var workerNum = Object.keys( workers ).length;
-            completeProcess.push(processIndex);
-            if( completeProcess.length >= taskAmount ) {
+            delete workers[taskName][worker.pid];
+            completeProcess[taskName].push(processIndex);
+            if( completeProcess[taskName].length >= taskAmount ) {
                 interfaceMerge( taskName, function(){
                     var platform = os.platform();
                     if( !/win/.test(platform) ) {
@@ -181,14 +182,14 @@ var createWorker = function(appPath){
                                         appLoger(taskName + '.csv影片列表抓取完成', [], taskName);
                                         console.log(taskName + '.csv影片列表抓取完成');
 
-                                        timerTastOut = timerTask();
+                                        delete completeProcess[taskName];
+                                        delete appsPath[taskName];
+                                        delete workers[taskName];
+                                        timerTask();
 
                                     }, 'json');
 
-                                    mailSpawn.on('exit', function () {
-
-
-                                    });
+                                    mailSpawn.on('exit', function () {});
 
                                 }
                             }, 'json');
@@ -202,15 +203,16 @@ var createWorker = function(appPath){
         }
     });
 
-    workers[worker.pid] = worker;
+    workers[taskName][worker.pid] = worker;
     console.log('Create worker:' + worker.pid);
     appLoger('Create worker:' + worker.pid, appPath.args, taskName);
 };
 
 // 启动进程
 var startWorder = function(name) {
+    appsPath[name] = [];
     for(var i = 1; i <= taskAmount; i++){
-        appsPath.push({
+        appsPath[name].push({
             path : './index.js',
             args :  [startIndex, excuteType, i, name]
         });
@@ -219,8 +221,8 @@ var startWorder = function(name) {
     var taskIndex = 0;
     (function(){
         var args = arguments;
-        if( taskIndex < appsPath.length ) {
-            createWorker(appsPath[taskIndex]);
+        if( taskIndex < appsPath[name].length ) {
+            createWorker(appsPath[name][taskIndex]);
             taskIndex++;
             setTimeout(function(){
                 args.callee();
@@ -230,9 +232,11 @@ var startWorder = function(name) {
 
     //父进程退出时杀死所有子进程
     process.on('exit',function(){
-        for(var pid in workers){
-            workers[pid].kill();
-        }
+        tools.each(workers, function(key, val){
+            tools.each(val, function(k, v){
+                v.kill();
+            })
+        });
         console.log('强行退出，或者任务执行完成!');
     });
 
@@ -402,12 +406,13 @@ var readFilmList = function( cb ) {
 
 var timerTastOut;
 var timerTask = function( time ){
+    var arg = arguments;
     time = time || 5000;
-    timerTastOut && clearInterval(timerTastOut);
-    timerTastOut = setInterval(function(){
+    timerTastOut && clearTimeout(timerTastOut);
+    timerTastOut = setTimeout(function(){
         readFilmList(function(name,path){
             if( name ) {
-                timerTastOut && clearInterval(timerTastOut);
+                timerTastOut && clearTimeout(timerTastOut);
                 var now = new Date(), confPath  = __dirname + '/conf/';
                 startTime = now.format("yyyy-MM-dd hh:mm:ss");
                 readJson(confPath + 'filmNote.txt', function(list){
@@ -427,24 +432,24 @@ var timerTask = function( time ){
 
                 }, 'json');
 
-
+            } else {
+                arg.callee();
             }
 
         });
     }, time);
 
-    return timerTastOut;
 };
 
-timerTastOut = timerTask();
+timerTask();
 
 
 // 启动抓取代理
 
-var startProxyWorker = function() {
+/*var startProxyWorker = function() {
 
     //保存fork返回的进程实例
-    var worker = fork('fetchIp.js', [0, 'online', -1], {silent: true});
+    var worker = fork('fetchIp.js', [-1, 'online', -1], {silent: true});
     //监听子进程exit事件
     worker.on('exit', function () {
         console.log('代理worker:' + worker.pid + '已经退出!');
@@ -452,4 +457,4 @@ var startProxyWorker = function() {
     });
 };
 
-startProxyWorker();
+startProxyWorker();*/
