@@ -651,6 +651,8 @@ var excuteExec = function(){
                                                 createBaiduIndex(interfaceContents, mnameIndex, mname, function(){
                                                     stdoutLoger(successPath, '抓取完成', true, true, function(){});
                                                 });
+                                            } else {
+                                                stdoutLoger(successPath, '抓取完成', true, true, function(){});
                                             }
                                         });
 

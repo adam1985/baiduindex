@@ -113,14 +113,16 @@ var createWorker = function(appPath){
     var worker = fork(appPath.path, appPath.args, {silent:true});
 
     var taskName = appPath.args[len-1];
-    completeProcess[taskName] = [];
+    taskState[taskName] = {};
     workers[taskName] = {};
+
+    var processIndex = appPath.args[len-2];
     //监听子进程exit事件
     worker.on('exit',function(){
         console.log('worker:' + worker.pid + 'exited');
         appLoger('worker:' + worker.pid + 'exited', appPath.args, taskName );
 
-        if( !taskState[appPath.args[len-2]] ) {
+        if( !taskState[taskName][processIndex] ) {
             delete workers[taskName][worker.pid];
             appPath.args[0] = -1;
             createWorker(appPath);
@@ -136,11 +138,16 @@ var createWorker = function(appPath){
 
     worker.on('message', function(res){
         if( res.complete  ){
-            var processIndex = appPath.args[len-2];
-            taskState[processIndex] = 1;
+
+            taskState[taskName][processIndex] = 1;
             appLoger('任务已完成:' + processIndex, appPath.args, taskName);
             delete workers[taskName][worker.pid];
-            completeProcess[taskName].push(processIndex);
+            if( completeProcess[taskName] ) {
+                completeProcess[taskName].push(processIndex);
+            } else {
+                completeProcess[taskName] = [processIndex];
+            }
+
             if( completeProcess[taskName].length >= taskAmount ) {
                 interfaceMerge( taskName, function(){
                     var platform = os.platform();
@@ -185,6 +192,7 @@ var createWorker = function(appPath){
                                         delete completeProcess[taskName];
                                         delete appsPath[taskName];
                                         delete workers[taskName];
+                                        delete taskState[taskName];
                                         timerTask();
 
                                     }, 'json');
