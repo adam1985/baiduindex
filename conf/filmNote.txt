@@ -1,0 +1,4 @@
+{"index":1,"name":"filmlist_2014_09_01.csv","path":"/opt/data/baiduindex/filmlist/filmlist_2014_09_01.csv","complete":false,"startTime":"2014-11-14 14:43:18"}
+{"index":2,"name":"filmlist_2014_09_02.csv","path":"/opt/data/baiduindex/filmlist/filmlist_2014_09_02.csv","complete":false}
+{"index":3,"name":"filmlist_2014_09_03.csv","path":"/opt/data/baiduindex/filmlist/filmlist_2014_09_03.csv","complete":false}
+{"index":4,"name":"filmlist_2014_09_04.csv","path":"/opt/data/baiduindex/filmlist/filmlist_2014_09_04.csv","complete":false}

@@ -167,10 +167,11 @@ var createWorker = function(appPath){
 
                                     var now = new Date();
                                     endTime = now.format("yyyy-MM-dd hh:mm:ss");
-                                    var mailTopic = taskName + ".csv百度指数抓取数据，" + endTime;
+                                    var mailTopic = taskName + ".csv百度指数抓取数据，" + endTime,
+                                        mailContent = mailTopic + '，请注意查收!';
+                                        fs.writeFileSync(confPath + '/mailbody.txt', mailContent);
 
-
-                                    var mailSpawn = spawn('mail', ["-s", mailTopic, "-a" , tarPath + "baiduindex.tar.bz2"].concat(maillist));
+                                    var mailSpawn = spawn('mail', ["-s", mailTopic, "-a" , tarPath + "baiduindex.tar.bz2"].concat(maillist).concat(['<' + confPath + '/mailbody.txt']));
 
                                     readJson(confPath + 'filmNote.txt', function(list){
                                         var filmStr = '';
