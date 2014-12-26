@@ -1,4 +1,8 @@
-{"index":1,"name":"filmlist_2014_09_01.csv","path":"/opt/data/baiduindex/filmlist/filmlist_2014_09_01.csv","complete":false,"startTime":"2014-11-14 14:43:18"}
-{"index":2,"name":"filmlist_2014_09_02.csv","path":"/opt/data/baiduindex/filmlist/filmlist_2014_09_02.csv","complete":false}
-{"index":3,"name":"filmlist_2014_09_03.csv","path":"/opt/data/baiduindex/filmlist/filmlist_2014_09_03.csv","complete":false}
-{"index":4,"name":"filmlist_2014_09_04.csv","path":"/opt/data/baiduindex/filmlist/filmlist_2014_09_04.csv","complete":false}
+{"index":1,"name":"filmlist_2014_09_01.csv","path":"/opt/data/baiduindex/filmlist/filmlist_2014_09_01.csv","complete":true,"startTime":"2014-11-14 14:43:18"}
+{"index":2,"name":"filmlist_2014_09_02.csv","path":"/opt/data/baiduindex/filmlist/filmlist_2014_09_02.csv","complete":true}
+{"index":3,"name":"filmlist_2014_09_03.csv","path":"/opt/data/baiduindex/filmlist/filmlist_2014_09_03.csv","complete":true}
+{"index":4,"name":"filmlist_2014_09_04.csv","path":"/opt/data/baiduindex/filmlist/filmlist_2014_09_04.csv","complete":true}
+{"index":5,"name":"test.csv","path":"D:\\wamp\\www\\webbf\\baiduindex\\filmlist\\test.csv","complete":true,"startTime":"2014-12-22 14:47:48"}
+{"index":6,"name":"filmlist_20141210.csv","path":"D:\\wamp\\www\\webbf\\baiduindex\\filmlist\\filmlist_20141210.csv","complete":true,"startTime":"2014-12-24 17:18:44"}
+{"index":7,"name":"filmlist_20141225.csv","path":"D:\\wamp\\www\\webbf\\baiduindex\\filmlist\\filmlist_20141225.csv","complete":true,"startTime":"2014-12-26 11:57:23","endTime":""}
+{"index":8,"name":"filmlist_20141227.csv","path":"D:\\wamp\\www\\webbf\\baiduindex\\filmlist\\filmlist_20141227.csv","complete":true,"startTime":"2014-12-25 12:11:41"}

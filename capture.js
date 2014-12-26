@@ -173,7 +173,7 @@ var openBaiduIndex = function( settings ) {
 
 
                             } else {
-                                console.log(JSON.stringify({index : filmIndex, noneres : true, success : false,msg : 'keyword none result!!!'}));
+                                console.log(JSON.stringify({index : filmIndex, noneres : true, success : false, msg : 'keyword none result!!!'}));
                                 phantom.exit();
                             }
                         }

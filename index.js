@@ -109,7 +109,7 @@ if( startIndex == -1 ) {
 
     var prevLoger = info.getPrevLoger(logerPath), type = prevLoger.type;
 
-    if( type == 'restart' ) {
+    if( type == 'restart' ||  type == 'again') {
         if( prevLoger.endIndex > 0 ) {
             if( prevLoger.endIndex <  prevLoger.length - 1 ){
                 prevIndex = prevLoger.endIndex + 1;
@@ -265,7 +265,7 @@ var createBaiduIndex = function( interfaceContents, mnameIndex, filmname, cb ){
                         var mname = key;
                         tools.each(value, function(i, val){
                             var interestVal = val.split(',');
-                            interest.push( [filmType, mname, "兴趣分布", interestVal.shift(), interestVal.join(',')].join('\t') + '\r\n');
+                            interest.push( [filmType, mname, "interest", interestVal.shift(), interestVal.join(',')].join('\t') + '\r\n');
                         });
                     });
                 }
@@ -301,7 +301,7 @@ var captureLoger = function( data, path, isSuccess, cb){
         data.index = mlist[mindex].index;
         data.type = mlist[mindex].type;
 
-        if(  restartExcute && !pathState[path]) {
+        if(  restartExcute && !pathState[path] ) {
             pathState[path] = 1;
 
             createFile(path, JSON.stringify(data) + '\r\n');
@@ -313,12 +313,12 @@ var captureLoger = function( data, path, isSuccess, cb){
                         if( !isHasRecode ) {
                             if( excuteType == 'repair' ) {
 
-                                data.index = failMlist[mindex].index;
+                                //data.index = failMlist[mindex].index;
 
                             }
 
                             if( excuteType == 'again' ) {
-                                data.index += againIndex + 1;
+                                //data.index += againIndex + 1;
                             }
 
                             fs.appendFileSync(path, JSON.stringify(data) + '\r\n');
@@ -335,6 +335,7 @@ var captureLoger = function( data, path, isSuccess, cb){
             }
         }
 
+        // 移除失败列表记录
         if( excuteType == 'repair' && /noneres|success/i.test(path) ){
             var logerStr = '';
 
@@ -413,12 +414,14 @@ var captureLoger = function( data, path, isSuccess, cb){
 
         if( dtd1 || dtd2 ) {
             Deferred.when( dtd1 || dtd2).done(function(){
-                cb && cb();
                 mnameIndex++;
+                cb && cb();
+
             });
         } else {
-            cb && cb();
             mnameIndex++;
+            cb && cb();
+
         }
     }
 
@@ -452,7 +455,7 @@ var createProxyLoger = function(path, name, type){
 
 
 // 测试代理ip是否连接正常
-var tcpTimeout = 30 * 1000, tcpLink, clientTimeOut = 5 * 1000;;
+var tcpTimeout = 30 * 1000, tcpLink, clientTimeOut = 5 * 1000;
 var startCapture = function(ip, success, fail){
     var arg = arguments;
     console.log('[' + mnameIndex + '-' + usedIpIndex + ']' + '"' + ip + '"正在检测ip是否连接正常!');
@@ -502,24 +505,30 @@ var startCapture = function(ip, success, fail){
 
 };
 
-var stdoutLoger = function( path, msg, successState, success, cb ){
-    cb = cb || function(){};
+var stdoutLoger = function( path, msg, successState, success){
     console.log('[' + mnameIndex + '-' + usedIpIndex + ']'+proxyIp+':' + msg);
     if( successState ) {
         captureLoger({
             index : mnameIndex,
             name : mname,
             success : success
-        }, path, success, cb );
+        }, path, success, function(){
+            excuteExec();
+        } );
     } else {
         if( captureState[mnameIndex] >= excuteSize ){
             captureLoger({
                 index : mnameIndex,
                 name : mname,
                 success : success
-            }, path);
+            }, path, null, function(){
+                excuteExec();
+            });
+        } else {
+            usedIpIndex++;
+            excuteExec();
         }
-        usedIpIndex++;
+
     }
 
 
@@ -536,6 +545,7 @@ var excuteExec = function(){
     timeoutLink && clearTimeout(timeoutLink);
     nodeTimeoutLink && clearTimeout(nodeTimeoutLink);
 
+        console.log(mnameIndex ,len);
         if(mnameIndex < len){
 
             if( mlist[mnameIndex] ) {
@@ -551,19 +561,19 @@ var excuteExec = function(){
                         console.log('[' + mnameIndex + '-' + usedIpIndex + ']' + proxyIp + ':连接正常');
 
                         if( captureState[mnameIndex] === undefined){
-                            captureState[mnameIndex] = 0;
+                            captureState[mnameIndex] = 1;
                         } else {
                             captureState[mnameIndex]++;
                         }
 
                         if( userProxyState[usedIpIndex] === undefined){
-                            userProxyState[usedIpIndex] = 0;
+                            userProxyState[usedIpIndex] = 1;
                         } else {
                             userProxyState[usedIpIndex]++;
                         }
 
                         if( phantom ) {
-                            phantom.kill();
+                            //phantom.kill();
                         }
 
                         if( proxyIp ){
@@ -584,6 +594,13 @@ var excuteExec = function(){
 
                         pid = phantom.pid;
 
+                        var restartCapture = function(){
+                                if( !phantomStete[mnameIndex + '_' + usedIpIndex] ) {
+                                    phantomStete[mnameIndex + '_' + usedIpIndex] = 1;
+                                    stdoutLoger(failPath, '页面超时，抓取失败，重新抓取', false);
+                                }
+                            };
+
                         timeoutLink = setTimeout(function(){
                             timeoutLink && clearTimeout(timeoutLink);
 
@@ -591,22 +608,9 @@ var excuteExec = function(){
 
                             console.log('[' + mnameIndex + '-' + usedIpIndex + ']'+proxyIp+':phantomjs无响应，重启服务!');
 
-                            usedIpIndex++;
-                            if( !phantomStete[mnameIndex + '_' + usedIpIndex] ) {
-                                phantomStete[mnameIndex + '_' + usedIpIndex] = 1;
-                                arg.callee();
-                            }
+                            restartCapture();
 
                         }, timeout);
-
-                        nodeTimeoutLink = setTimeout(function(){
-                            nodeTimeoutLink && clearTimeout(nodeTimeoutLink);
-                            usedIpIndex++;
-                            console.log('[' + mnameIndex + '-' + usedIpIndex + ']' + proxyIp + 'phantomjs超时将重新!');
-                            phantom.kill();
-                            process.kill(nodePid);
-                            //arg.callee();
-                        }, nodeTimeout);
 
                         phantom.stdout.on('data', function (data) {
                             data = data.toString();
@@ -619,8 +623,6 @@ var excuteExec = function(){
 
                             if( /{.*}/i.test(stdout)  && /index/i.test(stdout)  && /success/i.test(stdout) && /msg/i.test(stdout)) {
 
-
-
                                 var resultStr = stdout.match(/{(.*)}/)[0];
 
                                 //console.log(tools.trim(resultStr));
@@ -631,56 +633,57 @@ var excuteExec = function(){
 
                                 }
 
-                                if( result ) {
+                                if( !phantomStete[mnameIndex + '_' + usedIpIndex] ) {
+                                    phantomStete[mnameIndex + '_' + usedIpIndex] = 1;
 
-                                    if( result.success ) {
-                                        var interfaceList = result.face || [];
-                                        interfaceList.forEach(function(v){
-                                            console.log('[' + mnameIndex + '-' + usedIpIndex + ']'+'"' + mname + v + '接口"抓取成功');
-                                        });
+                                    if( result ) {
 
-                                        baiduindexContents = result.content;
+                                        if( result.success ) {
+                                            var interfaceList = result.face || [];
+                                            interfaceList.forEach(function(v){
+                                                console.log('[' + mnameIndex + '-' + usedIpIndex + ']'+'"' + mname + v + '接口"抓取成功');
+                                            });
 
-                                        var interfaceContents = [];
-                                        baiduindexContents.forEach(function(value){
-                                            interfaceContents.push( JSON.parse( tools.trim(base64.decode(value)) ));
-                                        });
+                                            baiduindexContents = result.content;
 
-                                        logerState( successPath, mname, function(isHasRecode){
-                                            if( !isHasRecode ) {
-                                                createBaiduIndex(interfaceContents, mnameIndex, mname, function(){
-                                                    stdoutLoger(successPath, '抓取完成', true, true, function(){});
-                                                });
-                                            } else {
-                                                stdoutLoger(successPath, '抓取完成', true, true, function(){});
+                                            var interfaceContents = [];
+                                            baiduindexContents.forEach(function(value){
+                                                interfaceContents.push( JSON.parse( tools.trim(base64.decode(value)) ));
+                                            });
+
+                                            logerState( successPath, mname, function(isHasRecode){
+                                                if( !isHasRecode ) {
+                                                    createBaiduIndex(interfaceContents, mnameIndex, mname, function(){
+                                                        stdoutLoger(successPath, '抓取完成', true, true);
+                                                    });
+                                                } else {
+                                                    stdoutLoger(successPath, '抓取完成', true, true);
+                                                }
+                                            });
+
+                                            createProxyLoger(successProxyPath, proxyIp, 'success');
+
+                                        } else if( result.success === false ){
+
+                                            if( result.noneres ) {
+
+                                                stdoutLoger(noneresPath, '关键词未收录，没有结果!', true);
+
+                                            } else if( result.block ) {
+
+                                                stdoutLoger(failPath, '代理ip被百度屏蔽!', false);
+                                            }else {
+                                                stdoutLoger(failPath, '页面超时，抓取失败，重新抓取', false);
                                             }
-                                        });
-
-
-
-
-                                        createProxyLoger(successProxyPath, proxyIp, 'success');
-
-                                    } else if( result.success === false ){
-
-                                        if( result.noneres ) {
-
-                                            stdoutLoger(noneresPath, '关键词未收录，没有结果!', true);
-
-                                        } else if( result.block ) {
-
-                                            stdoutLoger(failPath, '代理ip被百度屏蔽!', false);
-                                        }else {
-                                            stdoutLoger(failPath, '页面超时，抓取失败，重新抓取', false);
+                                            //arg.callee();
+                                        } else {
+                                            //stdoutLoger(failPath, 'phantomjs未知错误!', false);
                                         }
-                                        //arg.callee();
                                     } else {
-                                        //stdoutLoger(failPath, 'phantomjs未知错误!', false);
+                                        stdoutLoger(failPath, 'json数据解析错误，抓取失败，重新抓取', false);
                                     }
-                                } else {
-                                    stdoutLoger(failPath, 'json数据解析错误，抓取失败，重新抓取', false);
-                                }
 
+                                }
 
                             } else {
 
@@ -689,26 +692,21 @@ var excuteExec = function(){
                         });
 
                         phantom.stderr.on('data', function (data) {
-                            stdoutLoger(failPath, '错误输出流!', false);
+
                         });
 
                         phantom.on('close', function (code,signal) {
-                            //phantom.kill(signal);
-                            //phantom.stdin.end();
+                            //restartCapture();
                         });
 
                         phantom.on('error',function(code,signal){
-                            //phantom.kill(signal);
+
                         });
 
                         phantom.on('exit', function (code,signal) {
                             //phantom.kill(signal);
                             console.log('[' + mnameIndex + '-' + usedIpIndex + ']'+proxyIp+':进程结束，将重新启动抓取!');
-                            if( !phantomStete[mnameIndex + '_' + usedIpIndex] ) {
-                                phantomStete[mnameIndex + '_' + usedIpIndex] = 1;
-                                arg.callee();
-                            }
-
+                            //restartCapture();
                         });
 
                     });
@@ -773,10 +771,7 @@ readJson(formalPath, function(proxyList){
     if( excuteType ==  'repair') { // 修复模式
         repairFailList();
     } else if(excuteType ==  'again' || excuteType == 'restart') { // 读取csv
-        getFilmList(workPath, dataPath, function(filmList, index){
-            if( index ) {
-                againIndex = index;
-            }
+        getFilmList(workPath, dataPath, function(filmList){
 
             mlist = filmList;
 

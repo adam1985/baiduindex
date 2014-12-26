@@ -15,7 +15,7 @@ cd /opt/data/baiduindex && forever start -l /opt/data/baiduindex/log/ip_forever.
 // 线上环境下
 forever start -l log/forever.log -e log/err.log -w -a app.js 0 restart 20 1
 
-node index 0 restart 1 filmlist_2014_09_01
+node index 0 restart 1 filmlist_20141225
 
 node fetchIp 0 online -1
 

@@ -149,13 +149,41 @@ var createWorker = function(appPath){
             }
 
             if( completeProcess[taskName].length >= taskAmount ) {
+
                 interfaceMerge( taskName, function(){
                     var platform = os.platform();
+                    var confPath = __dirname + '/conf/';
+
+                    readJson(confPath + 'filmNote.txt', function(list){
+                        var filmStr = '';
+                        list.forEach(function(v, i){
+                            if(v.name.indexOf( taskName ) != -1 ){
+                                list[i].complete = true;
+                                list[i].endTime = endTime;
+                            }
+
+                            filmStr += JSON.stringify(v) + '\r\n';
+
+                        });
+
+                        fs.writeFileSync(confPath + 'filmNote.txt', filmStr);
+
+                        appLoger(taskName + '.csv影片列表抓取完成', [], taskName);
+                        console.log(taskName + '.csv影片列表抓取完成');
+
+                        delete completeProcess[taskName];
+                        delete appsPath[taskName];
+                        delete workers[taskName];
+                        delete taskState[taskName];
+
+
+                    }, 'json');
+
                     if( !/win/.test(platform) ) {
                         var tarPath = __dirname + '/create/' + taskName + '/';
                         var tarSpawn = spawn('tar', ["jcvf", tarPath + "baiduindex.tar.bz2", "-C", tarPath,  'data/',  'success.txt', 'noneres.txt', 'baiduindex.txt']);
                         tarSpawn.on('exit', function () {
-                            var confPath = __dirname + '/conf/';
+
                             readJson(confPath + 'mail.txt', function(list){
                                 if( list.length ){
                                     var maillist = [];
@@ -173,37 +201,16 @@ var createWorker = function(appPath){
 
                                     var mailSpawn = spawn('mail', ["-s", mailTopic, "-a" , tarPath + "baiduindex.tar.bz2"].concat(maillist).concat(['<' + confPath + '/mailbody.txt']));
 
-                                    readJson(confPath + 'filmNote.txt', function(list){
-                                        var filmStr = '';
-                                        list.forEach(function(v, i){
-                                            if(v.name.indexOf( taskName) != -1 ){
-                                                list[i].complete = true;
-                                                list[i].endTime = endTime;
-                                            }
-
-                                            filmStr += JSON.stringify(v) + '\r\n';
-
-                                        });
-
-                                        fs.writeFileSync(confPath + 'filmNote.txt', filmStr);
-
-                                        appLoger(taskName + '.csv影片列表抓取完成', [], taskName);
-                                        console.log(taskName + '.csv影片列表抓取完成');
-
-                                        delete completeProcess[taskName];
-                                        delete appsPath[taskName];
-                                        delete workers[taskName];
-                                        delete taskState[taskName];
-                                        timerTask();
-
-                                    }, 'json');
-
                                     mailSpawn.on('exit', function () {});
 
                                 }
                             }, 'json');
 
+                            timerTask();
+
                         });
+                    } else {
+                        timerTask();
                     }
                 });
 

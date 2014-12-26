@@ -90,9 +90,9 @@
         return str.replace(/^\s+|\s+$/gm, '');
     };
 
-    tools_.unique = function (data, isDeep, name){
+    tools_.unique = function (data, isDeep, name, cb){
         data = data || [];
-        var a = {}, res = [];
+        var a = {}, res = [], req = [];
         for (var i=0; i<data.length; i++) {
             var v, key;
             if( isDeep ) {
@@ -105,8 +105,12 @@
             if (typeof(a[key]) == 'undefined'){
                 a[key] = 1;
                 res.push( v );
+            } else {
+                req.push(v);
             }
         }
+
+        cb && cb(res, req);
 
         return res;
     };

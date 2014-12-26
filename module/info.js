@@ -1,6 +1,6 @@
 var fs = require('fs'),
     readJson = require('./readJson');
-var createLoger = function( path, data, mnameIndex, isInit ) {
+var createLoger = function( path, data, mnameIndex, isInit, cb ) {
     if( ( isInit && mnameIndex == 0 ) ) {
         fs.writeFileSync( path, JSON.stringify(data) + '\r\n');
     } else if( isInit ) {
@@ -19,6 +19,8 @@ var createLoger = function( path, data, mnameIndex, isInit ) {
                 logerStr += JSON.stringify(v) + '\r\n';
             });
             fs.writeFileSync(path, logerStr);
+
+            cb && cb();
 
         }, 'json');
     }
