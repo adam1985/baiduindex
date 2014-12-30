@@ -16,12 +16,10 @@ var sys = require('sys'),
     Deferred = require( "JQDeferred"),
     createPath = __dirname + '/create/',
     nodeCsv = require('node-csv'),
-    successPath = createPath + 'filmlist_20141225/success.txt',
-    noneresPath = createPath + 'filmlist_20141225/noneres.txt',
-    baiduindexPath = createPath + 'filmlist_20141225/baiduindex.txt',
-    csvPath = __dirname + '/filmlist/filmlist_20141225.csv';
-
-
+    successPath = createPath + 'filmlist_20141227/success.txt',
+    noneresPath = createPath + 'filmlist_20141227/noneres.txt',
+    baiduindexPath = createPath + 'filmlist_20141227/baiduindex.txt',
+    csvPath = __dirname + '/filmlist/filmlist_20141227.csv';
 
 
 var mlist = [], line = 1, index2 = 1;
@@ -42,10 +40,18 @@ nodeCsv.each(csvPath).on('data', function(data) {
     mlist = tools.unique(mlist, true, 'name');
     console.log(mlist.length);
     readJson(successPath, function(sucesslist){
+        console.log('success:', sucesslist.length, tools.unique(sucesslist, true, 'name').length);
         readJson(noneresPath, function(nonereslist){
+            console.log('noneres:', nonereslist.length, tools.unique(nonereslist, true, 'name').length);
             var list = sucesslist.concat(nonereslist);
 
+            tools.unique(nonereslist, true, 'name', function(reslist, reqlist){
+                console.log(reqlist);
+
+            });
+
             tools.unique(list, true, 'name', function(reslist, reqlist){
+                //console.log(reqlist);
                 console.log('single:', reslist.length, reqlist.length);
 
                 tools.each(mlist, function(i, v){
@@ -56,7 +62,6 @@ nodeCsv.each(csvPath).on('data', function(data) {
                         }
                     });
 
-
                 });
             });
 
@@ -64,6 +69,7 @@ nodeCsv.each(csvPath).on('data', function(data) {
     }, 'json');
 
 });
+
 
 readJson(baiduindexPath, function(list){
     var obj = {};
@@ -76,8 +82,10 @@ readJson(baiduindexPath, function(list){
         tools.each(sucesslist, function(i, v){
             if(!obj[v.name]) {
                 console.log(v.name);
+                index2++;
             }
         });
+        //console.log(index2);
     }, 'json');
 
 });

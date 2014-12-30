@@ -203,12 +203,15 @@ var defaultInfo = {
     };
 
 // 检测是否有历史记录
-var logerState = function( path , name, cb){
-    var  isHasRecode = false;
+var logerState = function( path , index, cb){
+    var  isHasRecode = false,
+         film = mlist[index],
+         type = film.type,
+         name = film.name;
 
     readJson(path, function(logerList){
         logerList.forEach(function(v, i){
-            if(v.name == name ) {
+            if(v.name == name && v.type == type ) {
                 isHasRecode = true;
                 return false;
             }
@@ -231,8 +234,8 @@ var baiduIndexState = {};
 var createBaiduIndex = function( interfaceContents, mnameIndex, filmname, cb ){
 
     var config = {
-        "1" : "19岁及以下",
-        "2" : "20~29岁",
+        "1" : "18岁以下",
+        "2" : "18~29岁",
         "3" : "30~39岁",
         "4" : "40~49岁",
         "5" : "50岁及以上",
@@ -242,8 +245,10 @@ var createBaiduIndex = function( interfaceContents, mnameIndex, filmname, cb ){
         "str_sex" : "sex"
     };
 
-        if( !baiduIndexState[filmname] ) {
-            var getSocial = [], interest = [], filmType = mlist[mnameIndex].type;
+    var filmType = mlist[mnameIndex].type, FILMTYPENAME = filmType + '_' + filmname;
+
+        if( !baiduIndexState[FILMTYPENAME] ) {
+            var getSocial = [], interest = [];
 
             interfaceContents.forEach( function(value, key){
                 var iContent = JSON.parse(tools.trim(value.data)).data , face = value.face;
@@ -285,7 +290,7 @@ var createBaiduIndex = function( interfaceContents, mnameIndex, filmname, cb ){
 
 
 
-            baiduIndexState[filmname] = 1;
+            baiduIndexState[FILMTYPENAME] = 1;
 
             cb && cb();
         }
@@ -309,7 +314,7 @@ var captureLoger = function( data, path, isSuccess, cb){
             if(fs.existsSync(path)) {
                 dtd1 = (function(){
                     var dtd = Deferred();
-                    logerState( path, mname, function( isHasRecode ){
+                    logerState( path, mindex, function( isHasRecode ){
                         if( !isHasRecode ) {
                             if( excuteType == 'repair' ) {
 
@@ -604,7 +609,9 @@ var excuteExec = function(){
                         timeoutLink = setTimeout(function(){
                             timeoutLink && clearTimeout(timeoutLink);
 
-                            phantom.kill();
+                            phantom.kill('SIGTERM');
+                            process.kill(pid);
+                            phantom = null;
 
                             console.log('[' + mnameIndex + '-' + usedIpIndex + ']'+proxyIp+':phantomjs无响应，重启服务!');
 
@@ -651,7 +658,7 @@ var excuteExec = function(){
                                                 interfaceContents.push( JSON.parse( tools.trim(base64.decode(value)) ));
                                             });
 
-                                            logerState( successPath, mname, function(isHasRecode){
+                                            logerState( successPath, mnameIndex, function(isHasRecode){
                                                 if( !isHasRecode ) {
                                                     createBaiduIndex(interfaceContents, mnameIndex, mname, function(){
                                                         stdoutLoger(successPath, '抓取完成', true, true);

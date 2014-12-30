@@ -96,7 +96,8 @@
         for (var i=0; i<data.length; i++) {
             var v, key;
             if( isDeep ) {
-                key = data[i][name];
+                var type = data[i].type;
+                key = type + '_' + data[i][name];
                 v = data[i];
             } else {
                 key = v = data[i];
