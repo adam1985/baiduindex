@@ -16,10 +16,10 @@ var sys = require('sys'),
     Deferred = require( "JQDeferred"),
     createPath = __dirname + '/create/',
     nodeCsv = require('node-csv'),
-    successPath = createPath + 'filmlist_20141227/success.txt',
-    noneresPath = createPath + 'filmlist_20141227/noneres.txt',
-    baiduindexPath = createPath + 'filmlist_20141227/baiduindex.txt',
-    csvPath = __dirname + '/filmlist/filmlist_20141227.csv';
+    successPath = createPath + 'filmlist_20141231/success.txt',
+    noneresPath = createPath + 'filmlist_20141231/noneres.txt',
+    baiduindexPath = createPath + 'filmlist_20141231/baiduindex.txt',
+    csvPath = __dirname + '/filmlist/filmlist_20141210.csv';
 
 
 var mlist = [], line = 1, index2 = 1;
@@ -37,18 +37,18 @@ nodeCsv.each(csvPath).on('data', function(data) {
     line++;
 }).on('end', function() {
     console.log(mlist.length);
-    mlist = tools.unique(mlist, true, 'name');
+    mlist = tools.unique(mlist, true, 'name', function(reslist, reqlist){
+
+    });
     console.log(mlist.length);
     readJson(successPath, function(sucesslist){
         console.log('success:', sucesslist.length, tools.unique(sucesslist, true, 'name').length);
         readJson(noneresPath, function(nonereslist){
             console.log('noneres:', nonereslist.length, tools.unique(nonereslist, true, 'name').length);
-            var list = sucesslist.concat(nonereslist);
-
             tools.unique(nonereslist, true, 'name', function(reslist, reqlist){
                 console.log(reqlist);
-
             });
+            var list = sucesslist.concat(nonereslist);
 
             tools.unique(list, true, 'name', function(reslist, reqlist){
                 //console.log(reqlist);
@@ -58,7 +58,7 @@ nodeCsv.each(csvPath).on('data', function(data) {
                     var find = false;
                     tools.each(reslist, function(ii, vv){
                         if( vv.name == v.name && vv.type != v.type ){
-                            console.log(vv.name, vv.type , v.type);
+                            //console.log(vv.name, vv.type , v.type);
                         }
                     });
 
@@ -74,18 +74,19 @@ nodeCsv.each(csvPath).on('data', function(data) {
 readJson(baiduindexPath, function(list){
     var obj = {};
     tools.each(list, function(i, v){
-        obj[v.split(/\s+/)[1]] = 1;
+        var attrs = v.split(/\s+/);
+        obj[attrs[0] + attrs[1]] = 1;
     });
 
     readJson(successPath, function(sucesslist){
         console.log(sucesslist.length, Object.keys(obj).length);
         tools.each(sucesslist, function(i, v){
-            if(!obj[v.name]) {
-                console.log(v.name);
+            if(!obj[v.type+v.name]) {
+                //console.log(v.name);
                 index2++;
             }
         });
-        //console.log(index2);
+        console.log(index2);
     }, 'json');
 
 });

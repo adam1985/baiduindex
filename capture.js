@@ -6,14 +6,18 @@ var base64 =  require('./module/base64.js');
 var $ = require('./module/jquery-2.1.1.min');
 
 var filmIndex = sys.args[1],
-    fileName = base64.decode(sys.args[2]);
+    fileName = base64.decode(sys.args[2]),
+    taskname = sys.args[4];
 
+var taskpath = './create/' + taskname + '/',
+    picPath = taskpath + 'screenshots/',
+    htmlPath = taskpath + 'html/';
 
 // 百度指数必需的核心cookie，登陆百度帐号后获取
 phantom.addCookie({
     'name'  : 'BDUSS',
-    //'value' : 'pnQ0hYYU8zSkN4UUxEZldwUnZuWVB2WEtNQnNXMGFrWEFVd0JxM3hoQkthYnRVQVFBQUFBJCQAAAAAAAAAAAEAAAAPqGVNAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAErck1RK3JNUOW',
-    value: 'HBRVEVYcnpzWmt4V082VWRMT1hDOWZLZUdpeXVLUX5Cfjd0fnpTQW52dHRhWFZVQVFBQUFBJCQAAAAAAAAAAAEAAAB9SUcVaGFid24AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAG3cTVRt3E1Ue',
+    'value' : 'pnQ0hYYU8zSkN4UUxEZldwUnZuWVB2WEtNQnNXMGFrWEFVd0JxM3hoQkthYnRVQVFBQUFBJCQAAAAAAAAAAAEAAAAPqGVNAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAErck1RK3JNUOW',
+    //value: 'HBRVEVYcnpzWmt4V082VWRMT1hDOWZLZUdpeXVLUX5Cfjd0fnpTQW52dHRhWFZVQVFBQUFBJCQAAAAAAAAAAAEAAAB9SUcVaGFid24AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAG3cTVRt3E1Ue',
     'domain': '.baidu.com',
     'path'  : '/'
 });
@@ -119,6 +123,8 @@ var openBaiduIndex = function( settings ) {
                 page.open(pageCof.url + fileName, function(status) {
 
                     if( status === 'success') {
+                        page.render(picPath + filmIndex + '.png');
+                        fs.write(htmlPath + filmIndex + '.html', page.content, 'w');
                         var isResult = page.evaluate(function () {
                             var worlds = ['立即购买', '未被收录', '暂不提供数据', '且不提供创建新词服务'],
                                 _isResult = true,

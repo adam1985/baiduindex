@@ -82,6 +82,7 @@ var phantom,
     logerList = [],
     mnameIndex = 0,
     mname,
+    mtype,
     len = 0,
     proxyIp,
     proxyIps,
@@ -150,7 +151,7 @@ var createFile = function( path, content ) {
 };
 
 var nodeLoger = function( data ){
-      var path = workPath + 'node.txt', maxLine = 5000;
+      var path = workPath + 'log.txt', maxLine = 500000;
     if( fs.existsSync(path) ) {
         readJson(path, function(list){
 
@@ -203,15 +204,12 @@ var defaultInfo = {
     };
 
 // 检测是否有历史记录
-var logerState = function( path , index, cb){
-    var  isHasRecode = false,
-         film = mlist[index],
-         type = film.type,
-         name = film.name;
+var logerState = function( path , mname, mtype, cb){
+    var  isHasRecode = false;
 
     readJson(path, function(logerList){
         logerList.forEach(function(v, i){
-            if(v.name == name && v.type == type ) {
+            if(v.name == mname && v.type == mtype ) {
                 isHasRecode = true;
                 return false;
             }
@@ -231,7 +229,8 @@ console.log('开始抓取数据!');
 
 // 生成百度指数数据
 var baiduIndexState = {};
-var createBaiduIndex = function( interfaceContents, mnameIndex, filmname, cb ){
+
+var createBaiduIndex = function( interfaceContents, filmname, mtype, cb ){
 
     var config = {
         "1" : "18岁以下",
@@ -245,7 +244,7 @@ var createBaiduIndex = function( interfaceContents, mnameIndex, filmname, cb ){
         "str_sex" : "sex"
     };
 
-    var filmType = mlist[mnameIndex].type, FILMTYPENAME = filmType + '_' + filmname;
+    var filmType = mtype, FILMTYPENAME = filmType + '_' + filmname;
 
         if( !baiduIndexState[FILMTYPENAME] ) {
             var getSocial = [], interest = [];
@@ -300,11 +299,11 @@ var createBaiduIndex = function( interfaceContents, mnameIndex, filmname, cb ){
 // 生成抓取日记
 var longerIndex = 0;
 var captureLoger = function( data, path, isSuccess, cb){
-    var mname = data.name, mindex = data.index, dtd1, dtd2;
+    var mindex = data.index, dtd1, dtd2;
 
     if( mindex < len ) {
         data.index = mlist[mindex].index;
-        data.type = mlist[mindex].type;
+        data.type = mtype;
 
         if(  restartExcute && !pathState[path] ) {
             pathState[path] = 1;
@@ -314,7 +313,7 @@ var captureLoger = function( data, path, isSuccess, cb){
             if(fs.existsSync(path)) {
                 dtd1 = (function(){
                     var dtd = Deferred();
-                    logerState( path, mindex, function( isHasRecode ){
+                    logerState( path, mname, mtype, function( isHasRecode ){
                         if( !isHasRecode ) {
                             if( excuteType == 'repair' ) {
 
@@ -547,6 +546,12 @@ var excuteExec = function(){
     var arg = arguments;
     baiduindexContent = [];
 
+    if( phantom ){
+        phantom.kill('SIGTERM');
+        process.kill(pid);
+        phantom = null;
+    }
+
     timeoutLink && clearTimeout(timeoutLink);
     nodeTimeoutLink && clearTimeout(nodeTimeoutLink);
 
@@ -556,6 +561,7 @@ var excuteExec = function(){
             if( mlist[mnameIndex] ) {
 
                 mname  = mlist[mnameIndex].name;
+                mtype = mlist[mnameIndex].type;
 
                 var commandArray =[], eachCapture = function(proxyIps){
                     if( proxyIps ) {
@@ -591,7 +597,7 @@ var excuteExec = function(){
                         //commandArray.push( '--script-encoding=gbk' );
 
                         commandArray.push( 'capture.js' );
-                        commandArray.push( mnameIndex, base64.encode( urlencode( mname , 'gbk')), taskIndex  );
+                        commandArray.push( mnameIndex, base64.encode( urlencode( mname , 'gbk')), taskIndex, filmname  );
 
                         phantom = spawn('phantomjs', commandArray, {
                             timeout : timeout
@@ -658,9 +664,9 @@ var excuteExec = function(){
                                                 interfaceContents.push( JSON.parse( tools.trim(base64.decode(value)) ));
                                             });
 
-                                            logerState( successPath, mnameIndex, function(isHasRecode){
+                                            logerState( successPath, mname, mtype, function(isHasRecode){
                                                 if( !isHasRecode ) {
-                                                    createBaiduIndex(interfaceContents, mnameIndex, mname, function(){
+                                                    createBaiduIndex(interfaceContents, mname, mtype, function(){
                                                         stdoutLoger(successPath, '抓取完成', true, true);
                                                     });
                                                 } else {
@@ -767,30 +773,47 @@ var repairFailList = function() {
 
 };
 
+// 开始抓取
+var startSpider = function(){
+        readJson(formalPath, function(proxyList){
+            proxyIps = proxyList || [];
+            totalIplength = proxyIps.length;
+            usedIpIndex = Math.floor(Math.random() * totalIplength);
+
+            if( excuteType ==  'repair') { // 修复模式
+                repairFailList();
+            } else if(excuteType ==  'again' || excuteType == 'restart') { // 读取csv
+                getFilmList(workPath, dataPath, function(filmList){
+
+                    mlist = filmList;
+
+                    len = mlist.length;
+
+                    console.log('一共有' + ( len ) + '个影片关键词待抓取!');
+                    excuteExec();
+
+                }, excuteType);
+
+            }
+        }, 'json');
+};
 
 
-// 抓取代理ip
-readJson(formalPath, function(proxyList){
-    proxyIps = proxyList || [];
-    totalIplength = proxyIps.length;
-    usedIpIndex = Math.floor(Math.random() * totalIplength);
+// 上次抓取状态
+if( fs.existsSync( successPath ) ) {
+    readJson(successPath, function(successList){
+        tools.each(successList, function(i, v){
+            var FILMTYPENAME = v.type + '_' + v.name;
+            baiduIndexState[FILMTYPENAME] = 1;
+        });
+        startSpider();
+    }, 'json');
+} else {
+    startSpider();
+}
 
-    if( excuteType ==  'repair') { // 修复模式
-        repairFailList();
-    } else if(excuteType ==  'again' || excuteType == 'restart') { // 读取csv
-        getFilmList(workPath, dataPath, function(filmList){
 
-            mlist = filmList;
 
-            len = mlist.length;
-
-            console.log('一共有' + ( len ) + '个影片关键词待抓取!');
-            excuteExec();
-
-        }, excuteType);
-
-    }
-}, 'json');
 
 
 
