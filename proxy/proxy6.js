@@ -3,7 +3,7 @@ var cheerio = require('cheerio'),
     ng = require('nodegrass');
 	
 	
-var startIndex = 1, pageSize = 15;
+var startIndex = 1, pageSize = 12;
 var createFile = function( path, content ) {
 	var isexists = fs.existsSync(path);
 	if(isexists) {
@@ -23,9 +23,9 @@ var getproxy = function( callback ) {
         if (startIndex <= pageSize) {
             var url;
             if( startIndex == 1 ){
-                url = 'http://www.dailik.com/guonei_ip/101034.html'
+                url = 'http://www.dailik.com/guonei_ip/101073.html'
             } else {
-                url = 'http://www.dailik.com/guonei_ip/101034_' + startIndex + '.html';
+                url = 'http://www.dailik.com/guonei_ip/101073_' + startIndex + '.html';
             }
             ng.get(url, function (data) {
 
@@ -35,8 +35,9 @@ var getproxy = function( callback ) {
                     proxyList = [];
 
                 spans.each(function (index) {
-                    var str = $(this).text();
-                    proxyList.push( str.substring( 0, str.indexOf('@') ) );
+                    var str = $(this).text(), rex = /(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*?#(\d+)/;
+                    rex.test(str);
+                    proxyList.push(RegExp.$1 + ':' + RegExp.$2);
                 });
 
                 totalProxyIps = totalProxyIps.concat(proxyList);

@@ -126,7 +126,7 @@
             } else {
                 name = v;
             }
-            if( val.indexOf( name ) != -1 ) {
+            if( val.toString().indexOf( name ) != -1 ) {
                 _inArray = true;
             }
         });

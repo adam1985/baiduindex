@@ -3,7 +3,7 @@ var cheerio = require('cheerio'),
     ng = require('nodegrass');
 	
 	
-var startIndex = 1, pageSize = 10;
+var startIndex = 1, pageSize = 12;
 var createFile = function( path, content ) {
 	var isexists = fs.existsSync(path);
 	if(isexists) {
@@ -23,9 +23,9 @@ var getproxy = function( callback ) {
         if (startIndex <= pageSize) {
             var url;
             if( startIndex == 1 ){
-                url = 'http://www.dailik.com/http_ip/101032.html'
+                url = 'http://www.dailik.com/http_ip/081067.html'
             } else {
-                url = 'http://www.dailik.com/http_ip/101032_' + startIndex + '.html';
+                url = 'http://www.dailik.com/http_ip/081067_' + startIndex + '.html';
             }
             ng.get(url, function (data) {
 

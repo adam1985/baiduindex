@@ -21,9 +21,10 @@ var getproxy = function( callback ) {
     ng.get('http://liunianip.sinaapp.com/tiqv.php?sxb=&tqsl=1000&ports=&ktip=&xl=%C8%AB%B2%BF&submit=%CC%E1++%C8%A1',function(data) {
         $ = cheerio.load(data);
 
-        var content = $('.article').html(),
-            rex = /\d+\.\d+\.\d+\.\d+:\d+/gm, proxyIps;
 
+
+        var content = $('body').html(),
+            rex = /\d+\.\d+\.\d+\.\d+:\d+/gm, proxyIps;
         if( content ) {
             proxyIps = content.match(rex);
         }

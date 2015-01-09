@@ -36,8 +36,8 @@ var getproxy = function( callback ) {
                     proxyList = [];
 
                 lines.each(function (index) {
-                    var line = $(this), ceils = line.find('td');
-                    if( index > 0 ) {
+                    var line = $(this), ceils = line.find('td'), rex = /(?:\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/;
+                    if( index > 0 && rex.test(ceils.eq(0).text())) {
                         proxyList.push(  ceils.eq(0).text() + ':' + ceils.eq(1).text());
                     }
                 });
@@ -62,5 +62,6 @@ var getproxy = function( callback ) {
     }());
 
 };
+
 
 exports.getproxy = getproxy;

@@ -7,22 +7,38 @@ var $ = require('./module/jquery-2.1.1.min');
 
 var filmIndex = sys.args[1],
     fileName = base64.decode(sys.args[2]),
-    taskname = sys.args[4];
+    //fileName = '%B4%D2%B4%D2%C4%C7%C4%EA',
+    taskname = sys.args[4],
+    changeUserMax = 20;
 
 var taskpath = './create/' + taskname + '/',
+    cookiesPath = './conf/cookies.txt',
+    spiderPath =  taskpath + 'spider.txt',
     picPath = taskpath + 'screenshots/',
     htmlPath = taskpath + 'html/';
+
+var cookies = JSON.parse(fs.read(cookiesPath));
 
 // 百度指数必需的核心cookie，登陆百度帐号后获取
 phantom.addCookie({
     'name'  : 'BDUSS',
-    'value' : 'pnQ0hYYU8zSkN4UUxEZldwUnZuWVB2WEtNQnNXMGFrWEFVd0JxM3hoQkthYnRVQVFBQUFBJCQAAAAAAAAAAAEAAAAPqGVNAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAErck1RK3JNUOW',
-    //value: 'HBRVEVYcnpzWmt4V082VWRMT1hDOWZLZUdpeXVLUX5Cfjd0fnpTQW52dHRhWFZVQVFBQUFBJCQAAAAAAAAAAAEAAAB9SUcVaGFid24AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAG3cTVRt3E1Ue',
+    'value' : cookies[0],
     'domain': '.baidu.com',
     'path'  : '/'
 });
 
+var header = {
+    operation: "GET",
+    encoding: "utf8",
+    headers: {
+        "Host":	"index.baidu.com",
+        "Referer": "http://index.baidu.com/?tpl=trend&word=" + fileName,
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:34.0) Gecko/20100101 Firefox/34.0"
+    }
+};
+
 var timeout = 30 * 1000, dtimeout = 45 * 1000;
+var spiderLog = {fail: 0};
 
 page.settings.resourceTimeout = timeout;
 
@@ -43,7 +59,7 @@ var captrueInterface = function( config, callback, postParam ) {
                 postUrl = interfacePath + val + '?' + $.param( postParam),
                 innerPage = webpage.create();
 
-            innerPage.open(postUrl, function (status) {
+            innerPage.open(postUrl, header, function (status) {
 
                 if( status === 'success') {
 
@@ -120,79 +136,95 @@ var openBaiduIndex = function( settings ) {
             if( captureIndex < length ) {
                 pageCof = settings[captureIndex];
                 captureIndex++;
-                page.open(pageCof.url + fileName, function(status) {
+                page.onResourceReceived = function (response) {
 
-                    if( status === 'success') {
-                        page.render(picPath + filmIndex + '.png');
-                        fs.write(htmlPath + filmIndex + '.html', page.content, 'w');
-                        var isResult = page.evaluate(function () {
-                            var worlds = ['立即购买', '未被收录', '暂不提供数据', '且不提供创建新词服务'],
-                                _isResult = true,
-                                content = document.body.innerHTML,
-                                length = document.querySelectorAll('#mainWrap').length;
 
-                            worlds.forEach(function(v){
-                                if( content.indexOf(v) != -1 ) {
-                                    _isResult = false;
-                                    return false;
-                                }
+                };
+                page.open(pageCof.url + fileName, header, function(status){
+                        //page.render(picPath + filmIndex + '.png');
+                        //fs.write(htmlPath + filmIndex + '.html', page.content, 'w');
+                        if(status == 'success' && page.title.indexOf('百度指数') > -1) {
+
+                            var isResult = page.evaluate(function () {
+                                var worlds = ['立即购买', '未被收录', '暂不提供数据', '且不提供创建新词服务'],
+                                    _isResult = true,
+                                    content = document.body.innerHTML,
+                                    length = document.querySelectorAll('#mainWrap').length;
+
+                                worlds.forEach(function(v){
+                                    if( content.indexOf(v) != -1 ) {
+                                        _isResult = false;
+                                        return false;
+                                    }
+                                });
+
+                                return  _isResult;
                             });
 
-                            return  _isResult;
-                        });
+                            var proxyBlock =  page.evaluate(function () {
+                                return  document.querySelectorAll('#userbar').length == 0;
+                            });
 
-                        var proxyBlock =  page.evaluate(function () {
-                            return  document.querySelectorAll('#userbar').length == 0;
-                        });
+                            if( proxyBlock ) {
+                                console.log(JSON.stringify({index : filmIndex, block : true, success : false, msg : 'proxy ip block!!!'}));
 
-                        if( proxyBlock ) {
-                            console.log(JSON.stringify({index : filmIndex, block : true, success : false, msg : 'proxy ip block!!!'}));
-
-                            phantom.exit();
-                        } else {
-                            if( isResult ) {
-                                // 生成接口文件
-                                var reqCount = 3, reqIndex = 0;
-                                (function(){
-                                    if( reqIndex < reqCount ) {
-                                        reqIndex++;
-                                        postParam = page.evaluate(function() {
-                                            return {
-                                                res : PPval.ppt,
-                                                res2 : PPval.res2
-                                            };
-                                        });
-                                        if( !postParam.res || !postParam.res2 ) {
-                                            arguments.callee();
+                                phantom.exit();
+                            } else {
+                                if( isResult ) {
+                                    // 生成接口文件
+                                    var reqCount = 3, reqIndex = 0;
+                                    (function(){
+                                        if( reqIndex < reqCount ) {
+                                            reqIndex++;
+                                            postParam = page.evaluate(function() {
+                                                return {
+                                                    res : PPval.ppt,
+                                                    res2 : PPval.res2
+                                                };
+                                            });
+                                            if( !postParam.res || !postParam.res2 ) {
+                                                arguments.callee();
+                                            }
                                         }
-                                    }
-                                }());
+                                    }());
 
-                                if( postParam.res && postParam.res2 ) {
-                                    captrueInterface( pageCof, function(){
-                                        arg.callee();
-                                    }, postParam );
+                                    if( postParam.res && postParam.res2 ) {
+                                        captrueInterface( pageCof, function(){
+                                            arg.callee();
+                                        }, postParam );
+                                    } else {
+                                        console.log(JSON.stringify({index : filmIndex, success : false, msg : 'interface param fetch fail!'}));
+                                        phantom.exit();
+                                    }
+
+
+
                                 } else {
-                                    console.log(JSON.stringify({index : filmIndex, success : false, msg : 'interface param fetch fail!'}));
+                                    console.log(JSON.stringify({index : filmIndex, noneres : true, success : false, msg : 'keyword none result!!!'}));
                                     phantom.exit();
                                 }
-
-
-
-                            } else {
-                                console.log(JSON.stringify({index : filmIndex, noneres : true, success : false, msg : 'keyword none result!!!'}));
-                                phantom.exit();
                             }
+
+                        } else {
+
+                            if (fs.exists(spiderPath)) {
+                                spiderLog = JSON.parse(fs.read(spiderPath));
+                            }
+
+                            if( spiderLog.fail < changeUserMax ){
+                                spiderLog.fail++;
+                            } else {
+                                spiderLog.fail = 0;
+                                cookies.push(cookies.shift());
+                                fs.write(cookiesPath, JSON.stringify(cookies), 'w');
+                            }
+                            fs.write(spiderPath, JSON.stringify(spiderLog), 'w');
+
+                            console.log(JSON.stringify({index : filmIndex, success : false, msg : 'interface open timeout!'}));
+
+                            page.close();
+                            phantom.exit();
                         }
-
-                    } else {
-
-                        console.log(JSON.stringify({index : filmIndex, success : false, msg : 'interface open timeout!'}));
-
-                        page.close();
-                        phantom.exit();
-                    }
-
                 });
             } else {
 

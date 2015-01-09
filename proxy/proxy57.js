@@ -48,5 +48,8 @@ var getproxy = function( callback ) {
 };
 
 
-exports.getproxy = getproxy;
+getproxy(function(proxyList){
+    console.log(proxyList);
+});
+//exports.getproxy = getproxy;
 

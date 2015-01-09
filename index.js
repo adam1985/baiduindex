@@ -150,6 +150,12 @@ var createFile = function( path, content ) {
     fs.writeFileSync(path, content);
 };
 
+var createPromise = function( fn ){
+    var dtd = Deferred();
+    fn( dtd );
+    return dtd.promise(fn);
+};
+
 var nodeLoger = function( data ){
       var path = workPath + 'log.txt', maxLine = 500000;
     if( fs.existsSync(path) ) {
@@ -218,11 +224,6 @@ var logerState = function( path , mname, mtype, cb){
     }, 'json');
 
 };
-
-if( excuteType != 'repair' ){
-    info.createLoger( logerPath, defaultInfo, mnameIndex, true );
-}
-
 
 console.log('开始抓取数据!');
 
@@ -366,17 +367,6 @@ var captureLoger = function( data, path, isSuccess, cb){
 
         }
 
-        //记录统计
-
-        var defaultInfo = {
-            startIndex : startIndex,
-            endIndex : startIndex,
-            excuteNum : 0,
-            startTime : initTime.format("yyyy-MM-dd hh:mm:ss"),
-            endTime : initTime.format("yyyy-MM-dd hh:mm:ss"),
-            dur : 0,
-            average : 0
-        };
 
         if( /noneres/i.test(path)){
             noneresNum++;
@@ -410,23 +400,32 @@ var captureLoger = function( data, path, isSuccess, cb){
         defaultInfo.failNum = failNum;
         defaultInfo.noneresNum = noneresNum;
 
-        if( excuteType != 'repair' ) {
-            info.createLoger( logerPath, defaultInfo, mnameIndex );
-        }
+        var promise = createPromise(function(dtd){
+            if( excuteType != 'repair' ) {
+                info.createLoger( logerPath, defaultInfo, mnameIndex, false, function(){
+                    dtd.resolve();
+                } );
+            } else {
+                dtd.resolve();
+            }
+        });
 
-        console.log('[' + mnameIndex + '-' + usedIpIndex + ']' + '"' + mname + '"日记已记录!');
+        promise.done(function(){
+            console.log('[' + mnameIndex + '-' + usedIpIndex + ']' + '"' + mname + '"日记已记录!');
 
-        if( dtd1 || dtd2 ) {
-            Deferred.when( dtd1 || dtd2).done(function(){
+            if( dtd1 || dtd2 ) {
+                Deferred.when( dtd1 || dtd2).done(function(){
+                    mnameIndex++;
+                    cb && cb();
+
+                });
+            } else {
                 mnameIndex++;
                 cb && cb();
 
-            });
-        } else {
-            mnameIndex++;
-            cb && cb();
+            }
+        });
 
-        }
     }
 
 };
@@ -788,6 +787,9 @@ var startSpider = function(){
                     mlist = filmList;
 
                     len = mlist.length;
+
+                    defaultInfo.length = len;
+                    info.createLoger( logerPath, defaultInfo, mnameIndex, true );
 
                     console.log('一共有' + ( len ) + '个影片关键词待抓取!');
                     excuteExec();
