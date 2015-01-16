@@ -2,8 +2,16 @@ var cheerio = require('cheerio'),
     fs = require('fs'),
     ng = require('nodegrass');
 
-
-var startIndex = 1, pageSize = 10;
+var pageurls = ['http://www.proxy360.cn/Region/China',
+    'http://www.proxy360.cn/Region/Brazil',
+    'http://www.proxy360.cn/Region/America',
+    'http://www.proxy360.cn/Region/Taiwan',
+    'http://www.proxy360.cn/Region/Japan',
+    'http://www.proxy360.cn/Region/Thailand',
+    'http://www.proxy360.cn/Region/Vietnam',
+    'http://www.proxy360.cn/Region/bahrein'
+];
+var startIndex = 0, pageSize = pageurls.length;
 var createFile = function( path, content ) {
     var isexists = fs.existsSync(path);
     if(isexists) {
@@ -20,19 +28,15 @@ var getproxy = function( callback ) {
 
     (function () {
         var args = arguments;
-        if (startIndex <= pageSize) {
-            ng.get('http://www.xici.net.co/wt/' + startIndex, function (data) {
-                console.log(data);
+        if (startIndex < pageSize) {
+            ng.get('http://www.proxy360.cn/Proxy', function (data) {
                 $ = cheerio.load(data);
-                var table = $('#ip_list'),
-                    lineTr = table.find('tr'),
+                var proxylistitem = $('.proxylistitem'),
                     proxyList = [];
 
-                lineTr.each(function (index) {
-                    var ceils = $(this).find('td');
-                    if( index > 0 ) {
-                        proxyList.push(ceils.eq(2).text() + ':' + ceils.eq(3).text());
-                    }
+                proxylistitem.each(function () {
+                    var tbBottomLines = $(this).find('.tbBottomLine');
+                        proxyList.push(tbBottomLines.eq(0).text().replace(/\s+/g, '') + ':' + tbBottomLines.eq(1).text().replace(/\s+/g, ''));
                 });
 
                 totalProxyIps = totalProxyIps.concat(proxyList);
@@ -44,10 +48,7 @@ var getproxy = function( callback ) {
                 args.callee();
 
             }, {
-                "User-Agent" : "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.57 Safari/537.36",
-                "Host":"www.xici.net.co",
-                "If-None-Match":"865dd09d9639b6aeb59e741609d069bc",
-                "Cookie" : "incap_ses_219_257263=a89sch02OTahB9NyRAwKA7J6r1QAAAAAZfmoJTB0uMHoE/tBkzzkwQ==;"
+                "User-Agent" : "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.57 Safari/537.36"
             }).on('error', function(e) {
                 startIndex++;
                 args.callee();
@@ -62,5 +63,7 @@ var getproxy = function( callback ) {
 
 };
 
-
+/*getproxy(function(list){
+ console.log(list,list.length);
+ });*/
 exports.getproxy = getproxy;

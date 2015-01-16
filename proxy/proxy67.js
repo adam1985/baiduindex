@@ -14,7 +14,7 @@ var createFile = function( path, content ) {
 var getproxy = function( callback ) {
     console.log('start getproxy ip...');
 
-    ng.get('http://www.youdaili.net/Daili/http/', function (data) {
+    ng.get('http://www.youdaili.net/Daili/guowai/', function (data) {
         $ = cheerio.load(data);
         var titles = $('.newslist_line a'), pageUrls = [];
         titles.each(function(){
@@ -89,6 +89,6 @@ var getproxy = function( callback ) {
 };
 
 /*getproxy(function(list){
- console.log(list,list.length);
- });*/
+    console.log(list,list.length);
+});*/
 exports.getproxy = getproxy;

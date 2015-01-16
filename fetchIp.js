@@ -28,8 +28,8 @@ dateFormat.format();
 var initTime = new Date();
 var dateString = initTime.format("yyyyMMddhhmmss");
 
-var proxyIpRange = {start : 1, end : 62},
-    excludesProxys = [1, 11, 12, 48, 53, 54, 55, 57],
+var proxyIpRange = {start : 1, end : 67},
+    excludesProxys = [4, 5, 48, 53, 54, 55, 57],
     excuteType = arguments[0],
     dirname = arguments[1] || dateString,
     startIndex = arguments[2] || proxyIpRange.start,
@@ -296,7 +296,7 @@ if( type == 0 || type == -1 ){
                                 checkPageCaptrue(name, function(){
                                     readJson(spiderPath, function(formalList){
                                         if( isOnline ){
-                                            if( formalList.length > 1000 ) {
+                                            if( formalList.length > 10000 ) {
                                                 fs.writeFileSync(formalPath, fs.readFileSync(spiderPath).toString());
                                                 fs.unlinkSync(spiderPath);
                                             }

@@ -3,7 +3,7 @@ var cheerio = require('cheerio'),
     ng = require('nodegrass');
 	
 	
-var startIndex = 1, pageSize = 15;
+var startIndex = 1, pageSize = 1;
 var createFile = function( path, content ) {
 	var isexists = fs.existsSync(path);
 	if(isexists) {
@@ -21,21 +21,15 @@ var getproxy = function( callback ) {
     (function () {
         var args = arguments;
         if (startIndex <= pageSize) {
-            ng.get('http://ip.zdaye.com/?pageid=' + startIndex, function (data) {
+            ng.get('http://www.66ip.cn/mo.php?sxb=&tqsl=100000&port=&export=&ktip=&sxa=&submit=%CC%E1++%C8%A1&textarea=' + startIndex, function (data) {
 
-                $ = cheerio.load(data);
-                var table = $('table[class="ctable"]'),
-                    lineTr = table.find('tr'),
-                    proxyList = [];
+                var content = data,
+                    rex = /\d+\.\d+\.\d+\.\d+:\d+/gm, proxyIps = [];
+                if( content ) {
+                    proxyIps = content.match(rex);
+                }
 
-                lineTr.each(function (index) {
-                    var ceils = $(this).find('td');
-                    if( index > 0 ) {
-                        proxyList.push(ceils.eq(0).text() + ':' + ceils.eq(1).text());
-                    }
-                });
-
-                totalProxyIps =  totalProxyIps.concat(proxyList);
+                totalProxyIps =  totalProxyIps.concat(proxyIps);
 
                 console.log('正在获取第' + startIndex + '页数据');
 
@@ -55,7 +49,7 @@ var getproxy = function( callback ) {
     }());
 
 };
-getproxy(function(proxyList){
-    console.log(proxyList);
-});
-//exports.getproxy = getproxy;
+/*getproxy(function(list){
+ console.log(list,list.length);
+ });*/
+exports.getproxy = getproxy;

@@ -126,9 +126,11 @@
             } else {
                 name = v;
             }
-            if( val.toString().indexOf( name ) != -1 ) {
+
+            if( name == val ){
                 _inArray = true;
             }
+
         });
 
         return _inArray;
