@@ -29,7 +29,7 @@ var initTime = new Date();
 var dateString = initTime.format("yyyyMMddhhmmss");
 
 var proxyIpRange = {start : 1, end : 67},
-    excludesProxys = [4, 5, 48, 53, 54, 55, 57],
+    excludesProxys = [3, 4, 5, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 48, 53, 54, 55, 57],
     excuteType = arguments[0],
     dirname = arguments[1] || dateString,
     startIndex = arguments[2] || proxyIpRange.start,
